@@ -23,32 +23,56 @@
 //opendir(pDirent); //can we open this as a directory?
 //if(no) { continue; }
 //if(yes) { ...(); }
+/*
 void printAll(DIR* pDir) {
 
     struct dirent *pDirent;
 
     while ((pDirent = readdir(pDir)) != NULL) {
         
-        if(pDirent->d_name[0] == '.') {
+        char* dName = pDirent->d_name;
+        if(dName[0] == '.') {
             continue;
         }
-        printf("[%s]\n", pDirent->d_name);
+        printf("[%s]\n", dName);
 
-        DIR* subDir = opendir(pDirent->d_name);
+        DIR* subDir = opendir(dName);
         //int err = errno;
         //does this return NULL? or does this run?
-        //#define ENOTDIR 20 /*Not a directory*/
         if(subDir == NULL) {
-           continue;
+            continue;
         } 
         else {
             printAll(subDir);
         }
-
     }
 
 }
+*/
 
+void printAll(char* path) {
+
+    char pathToNext[1000];
+    DIR* dir;
+    struct dirent* entry;
+    if((dir = opendir(path)) != NULL) {
+
+        while((entry = readdir(dir)) != NULL) {
+            if(strcmp(entry->d_name, ".")!=0 && strcmp(entry->d_name, "..")!=0) {
+                printf("[%s]\n", entry->d_name);
+                strcpy(pathToNext, path);
+                strcat(pathToNext, "/");
+                strcat(pathToNext, entry->d_name);
+                printAll(pathToNext);
+            }
+        }
+
+        closedir(dir);
+
+    }
+    //else printf("yer");
+
+}
 
 int main(int argc, char* argv[]) {
 
@@ -92,6 +116,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Pointer for directory entry 
+    /*
     DIR *pDir;
 
     pDir = opendir (argv[1]);
@@ -104,6 +129,10 @@ int main(int argc, char* argv[]) {
     printAll(pDir);
 
     closedir (pDir);
+    */
+
+    printAll(argv[1]);
+
     return 0;
 
 
