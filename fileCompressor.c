@@ -19,14 +19,47 @@
 //    4. Implement the -b and -R flags and test writing out a Huffman code book
 //    5.  . ... etc.
 
+//printf("[%s]\n", pDirent->d_name);
+//opendir(pDirent); //can we open this as a directory?
+//if(no) { continue; }
+//if(yes) { ...(); }
+void printAll(DIR* pDir) {
+
+    struct dirent *pDirent;
+
+    while ((pDirent = readdir(pDir)) != NULL) {
+        
+        if(pDirent->d_name[0] == '.') {
+            continue;
+        }
+        printf("[%s]\n", pDirent->d_name);
+
+        DIR* subDir = opendir(pDirent->d_name);
+        //int err = errno;
+        //does this return NULL? or does this run?
+        //#define ENOTDIR 20 /*Not a directory*/
+        if(subDir == NULL) {
+           continue;
+        } 
+        else {
+            printAll(subDir);
+        }
+
+    }
+
+}
+
+
 int main(int argc, char* argv[]) {
 
+    /*
     if (argc < 3)
 	{
 		printf("Need more/ less  of arguments.\n Here is what the input should be formatted as: ./fileCompressor <flag> <path or file> |codebook|\n");
 		
 		EXIT_FAILURE;
 	}
+    */
 
     char recursive = 0;
 	char compress = 0;
@@ -59,13 +92,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Pointer for directory entry 
-    struct dirent *pDirent;
     DIR *pDir;
 
-    if (argc < 2) {
-        printf ("Usage: testprog <dirname>\n");
-        return 1;
-    }
     pDir = opendir (argv[1]);
     // opendir returns NULL if couldn't open directory 
     if (pDir == NULL) {
@@ -73,9 +101,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    while ((pDirent = readdir(pDir)) != NULL) {
-        printf ("[%s]\n", pDirent->d_name);
-    }
+    printAll(pDir);
+
     closedir (pDir);
     return 0;
 
