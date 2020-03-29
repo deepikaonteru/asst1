@@ -1,12 +1,4 @@
-FreqTree *createFreqTree();
-FreqTNode *createFreqTNode(char *token);
-FreqTNode *insertNode(FreqTNode *root, char *token, int *treeCount);
-void insertLikeMinHeap(MinHeap* heap, FreqTNode *node);
-MinHeap* convertFreqTreeToMinHeap(FreqTree *tree);
-void printFreqTNode(FreqTNode *root);
-void printFreqTree(FreqTree *tree);
-void printFreqTNode(FreqTNode *root) ;
-void freeFreqTree(FreqTree *tree);
+#include "freqDict.h"
 
 FreqTree *createFreqTree() {
 	FreqTree *tree = (FreqTree *) malloc(sizeof(FreqTree));

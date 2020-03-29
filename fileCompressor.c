@@ -5,8 +5,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include "minHeap.h"
+#include "freqDict.h"
  
-
+void printAll(char*);
+void buildCodebook(char*);
 
 // 1) build max heap, bst, avl?
 // 2) 0. Get your program to find all files in a directory and print out their names
@@ -74,45 +77,64 @@ void printAll(char* path) {
 
 }
 
+void buildCodebook(char* path)
+{    
+    //open file
+    int fd = open(path, O_RDONLY);
+    if(fd == -1) { //if file does not exist
+	    int errsv = errno;
+		printf("Fatal Error: file \"");
+		printf("%s\" ", path);
+		printf("does not exist\n");
+		close(fd);
+		return;
+	}
+    
+    
+}
+
 int main(int argc, char* argv[]) {
 
-    /*
     if (argc < 3)
 	{
 		printf("Need more/ less  of arguments.\n Here is what the input should be formatted as: ./fileCompressor <flag> <path or file> |codebook|\n");
 		
 		EXIT_FAILURE;
 	}
-    */
 
-    char recursive = 0;
-	char compress = 0;
-	char decompress = 0;	
-	char buildCodebook = 0;
-    
-	int i;
+    char recursiveFlag = 0;
+	char compressFlag = 0;
+	char decompressFlag = 0;	
+	char buildFlag = 0;
+
+    int i;
     for (i = 0; i < argc; i++)
     {
     //comparing if that parameter is -R particular flag and then setting the recursive to 1 
       if (strcmp("-R", argv[i]) == 0)
 	  {
-            recursive = 1;
+            recursiveFlag = 1;
 	  }
     //comparing if that parameter is -b particular flag and then setting the compress to 1
         if (strcmp("-b", argv[i]) == 0)
 	  {
-            compress = 1;
+            buildFlag = 1;
 	  }
 	//comparing if that parameter is -d particular flag and then setting the decompress to 1
 	  if (strcmp("-d", argv[i]) == 0)
 	  {
-            decompress = 1;
+            decompressFlag = 1;
 	  }
 	//comparing if that parameter is -c particular flag and then setting the buildCodebook to 1
 	  if (strcmp("-c", argv[i]) == 0)
 	  {
-            buildCodebook = 1;
+            compressFlag = 1;
 	  }
+    }
+
+    if(recursiveFlag == 0 && buildFlag == 1) 
+    {
+        buildCodebook(argv[2]);
     }
 
     // Pointer for directory entry 
