@@ -50,9 +50,9 @@ void insertNode(MinHeap* heap, HeapNode *heapNode) {
   
 	/* position node at right position; check its parent node, and compare it with new node. If its more, we shall move it to old position of last node. 
 	   it will continue until we find a node which has value lower than the new node, and place the new node as a child node of that node. */
-    while (i != 0 && heap->nodes[parent(i)]->count > heap->nodes[i]->count) { 
-       swap(heap, i, parent(i));
-       i = parent(i);
+    while (i != 0 && heap->nodes[PARENT(i)]->count > heap->nodes[i]->count) { 
+       swap(heap, i, PARENT(i));
+       i = PARENT(i);
     }
 }
 
@@ -137,7 +137,7 @@ void printTree(TreeNode *root) {
 
 int isSizeOne(struct MinHeap* minHeap) 
 { 
-    return (minHeap->size == 1); 
+    return (minHeap->heapSize == 1); 
 } 
 
 /*
@@ -162,7 +162,7 @@ TreeNode* buildHuffmanTree(MinHeap *heap) {
 		HeapNode *min2 = popMinNode(heap);
 
 		HeapNode *freqNode = (HeapNode *) malloc(sizeof(HeapNode));
-		freqNode->countt = min1->count + min2->count;
+		freqNode->count = min1->count + min2->count;
 		freqNode->data = createTreeNode("", min1->data, min2->data);
 
 		free(min1);
@@ -173,8 +173,7 @@ TreeNode* buildHuffmanTree(MinHeap *heap) {
 	 }
 
 	if(heap->heapSize > 0) {
-		 return popMinNode(heap)
-		//return heap->nodes[0]->data;
+		return heap->nodes[0]->data;
 	} else {
 		return NULL;
 	}

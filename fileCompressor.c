@@ -1,16 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <dirent.h>
-#include "minHeap.h"
-#include "freqDict.h"
- 
-void printAll(char*);
-void buildCodebook(char*);
-
+#include "fileCompressor.h"
 // 1) build max heap, bst, avl?
 // 2) 0. Get your program to find all files in a directory and print out their names
 //    1. Get your program to recursively descend down all subdirectories and print out their names with paths

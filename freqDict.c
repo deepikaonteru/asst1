@@ -16,7 +16,7 @@ FreqTNode *createFreqTNode(char *token) {
 	return node;
 }
 
-FreqTNode *insertNode(FreqTNode *root, char *token, int *treeCount) {
+FreqTNode *insertTNode(FreqTNode *root, char *token, int *treeCount) {
 	if(root == NULL) {
 		root = createFreqTNode(token);
 		*treeCount += 1;
@@ -26,10 +26,10 @@ FreqTNode *insertNode(FreqTNode *root, char *token, int *treeCount) {
 			root->freq += 1;
         // if root is less than token, insert on root's right
 		} else if(strcmp(root->token, token) < 0) {
-			root->right = insertNode(root->right, token, treeCount);
+			root->right = insertTNode(root->right, token, treeCount);
         // if root is greater than token, insert on root's right
 		} else {
-			root->left = insertNode(root->left, token, treeCount);
+			root->left = insertTNode(root->left, token, treeCount);
 		}
 	}
 	return root;
@@ -38,22 +38,20 @@ FreqTNode *insertNode(FreqTNode *root, char *token, int *treeCount) {
 // in FreqTree, the token is compared lexicograpically, while MinHeap comparison is based on the freq (count) of token in file
 void insertLikeMinHeap(MinHeap* heap, FreqTNode *node) {
 	if(node != NULL) {
-		// 
+		
 		insertLikeMinHeap(heap, node->left);
 		
-		// 
 		HeapNode *temp = (HeapNode *) malloc(sizeof(HeapNode));
 		temp->count = node->freq;
-		temp->data = createFreqTNode(node->token, NULL, NULL);
+		temp->data = createTreeNode(node->token, NULL, NULL);
 		insertLikeMinHeap(heap, temp);
 
-		// 
 		insertLikeMinHeap(heap, node->right);
 	}
 }
 
 MinHeap* convertFreqTreeToMinHeap(FreqTree *tree) {
-	MinHeap* heap = buildHuffmanTree(tree->size);
+	MinHeap* heap = buildHuffmanTree(tree);
 	
 	insertLikeMinHeap(heap, tree->root);
 	

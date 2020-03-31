@@ -1,5 +1,11 @@
-#ifndef "MINHEAP_H"
-#define "MINHEAP_H"
+#ifndef MINHEAP_H
+#define MINHEAP_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stddef.h>
+
 
 typedef struct TreeNode {
 	char *token;

@@ -1,5 +1,7 @@
-#ifndef "FREQDICT_H"
-#define "FREQDICT_H"
+#ifndef FREQDICT_H
+#define FREQDICT_H
+
+#include "minHeap.h"
 
 typedef struct FreqTNode 
 {
@@ -17,7 +19,7 @@ typedef struct FreqTree
 
 FreqTree *createFreqTree();
 FreqTNode *createFreqTNode(char *token);
-FreqTNode *insertNode(FreqTNode *root, char *token, int *treeCount);
+FreqTNode *insertTNode(FreqTNode *root, char *token, int *treeCount);
 void insertLikeMinHeap(MinHeap* heap, FreqTNode *node);
 MinHeap* convertFreqTreeToMinHeap(FreqTree *tree);
 void printFreqTNode(FreqTNode *root);
