@@ -44,33 +44,22 @@ void insertLikeMinHeap(MinHeap* heap, FreqTNode *node) {
 		HeapNode *temp = (HeapNode *) malloc(sizeof(HeapNode));
 		temp->count = node->freq;
 		temp->data = createTreeNode(node->token, NULL, NULL);
-		insertLikeMinHeap(heap, temp);
+		insertNode(heap, temp);
 
 		insertLikeMinHeap(heap, node->right);
 	}
 }
 
 MinHeap* convertFreqTreeToMinHeap(FreqTree *tree) {
-	MinHeap* heap = buildHuffmanTree(tree);
+	
+	MinHeap* heap = buildMinHeap(tree->size);
 	
 	insertLikeMinHeap(heap, tree->root);
 	
 	return heap;
 }
 
-void printFreqTNode(FreqTNode *root) {
-	if(root != NULL) {
-		printFreqTNode(root->left);
-		printf("%s: %d\n", root->token, root->freq);
-		printFreqTNode(root->right);
-	}
-}
 
-void printFreqTree(FreqTree *tree) {
-	printFreqTNode(tree->root);
-}
-
-// Freeing tree and nodes
 void printFreqTNode(FreqTNode *root) {
 	if(root != NULL) {
 		freeFreqTNode(root->left);
@@ -79,7 +68,22 @@ void printFreqTNode(FreqTNode *root) {
 		free(root);
 	}	
 }
+
+void printFreqTree(FreqTree *tree) {
+	printFreqTNode(tree->root);
+}
+
+void freeFreqTNode(FreqTNode *root) {
+	if(root != NULL) {
+		freeFreqTNode(root->left);
+		freeFreqTNode(root->right);
+		free(root->token);
+		free(root);
+	}	
+}
+
 void freeFreqTree(FreqTree *tree) {
 	freeFreqTNode(tree->root);
 	free(tree);
 }
+

@@ -22,9 +22,9 @@ FreqTNode *createFreqTNode(char *token);
 FreqTNode *insertTNode(FreqTNode *root, char *token, int *treeCount);
 void insertLikeMinHeap(MinHeap* heap, FreqTNode *node);
 MinHeap* convertFreqTreeToMinHeap(FreqTree *tree);
-void printFreqTNode(FreqTNode *root);
-void printFreqTree(FreqTree *tree);
 void printFreqTNode(FreqTNode *root) ;
+void freeFreqTNode(FreqTNode *root);
 void freeFreqTree(FreqTree *tree);
+void printFreqTree(FreqTree *tree);
 
 #endif
