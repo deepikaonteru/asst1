@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-
+#include <math.h>
 
 typedef struct TreeNode {
 	char *token;
@@ -32,7 +32,7 @@ HeapNode* popMinNode(MinHeap* heap);
 TreeNode* createTreeNode(char *token, TreeNode *leftNode, TreeNode *rightNode);
 void freeTree(TreeNode *root);
 void printTree(TreeNode *root);
-TreeNode* buildHuffmanTree(MinHeap *heap);
 int isSizeOne(struct MinHeap* minHeap); 
+TreeNode* buildHuffmanTree(MinHeap *heap);
 
 #endif

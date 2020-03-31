@@ -1,4 +1,11 @@
-Node* readFile(int fd) {
+void refresh (char* buffer, int count){
+	int i;
+	for (i = 0; i < count; i++){
+		buffer[i] = '\0';
+	}
+}
+
+FreqTree* buildHelper(int fd) {
 
 	char buffer[200];
 	int i;
@@ -7,9 +14,10 @@ Node* readFile(int fd) {
 		buffer[i]='\0';
 
 	}
+
 	int bytesRead;
-	int count=0;
-	Node* root;
+	int tokLength=0;
+	FreqTree *tokFreqTreeRoot = createFreqTree();
 
 	do {
 
@@ -21,29 +29,36 @@ Node* readFile(int fd) {
 		if(isspace(c) || bytesRead == 0) {
 
 			/*Create Node HERE*/
-			root = insert(root, buffer);
+			tokFreqTreeRoot = insertIntoFreqTree(tokFreqTreeRoot, buffer);
+
+			//insert(root, buffer);
 			//printf("%s\n", root->token);
 			//printf("%s\n", buffer);
 			refresh(buffer, 200);
-			count=0;
-			
+			tokLength=0;
 
-		}
-		else if(isspace(c)) {
-
-			continue;
-
+			//whitespace
+			buffer[0]= c;
+			tokFreqTreeRoot = insertIntoFreqTree(tokFreqTreeRoot, buffer);
 		}
 		else {
 
-			buffer[count] = c;
-			count ++;
+			buffer[tokLength] = c;
+			tokLength ++;
 
 		}
-		
 
 	} while(bytesRead > 0);
 
 	return root;
 
+}
+
+
+buildCodebook{
+	// convert FreqTree* return root from buildHelper to minHeap
+	// free FreqTree
+	// build huffman tree from minHeap
+    // write to new file created by in order traversing through huffman tree
+    
 }

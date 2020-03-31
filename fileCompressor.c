@@ -1,4 +1,5 @@
 #include "fileCompressor.h"
+
 // 1) build max heap, bst, avl?
 // 2) 0. Get your program to find all files in a directory and print out their names
 //    1. Get your program to recursively descend down all subdirectories and print out their names with paths
@@ -78,6 +79,11 @@ void buildCodebook(char* path)
 		return;
 	}
     
+    //tokenize each token including spaces right after word by creating freqTNode and creating freqTree and inserting TNode into our freqTree
+
+    //converting it to minHeap after done reading file
+
+    //write to new file created by in order traversing through min heap 
     
 }
 
