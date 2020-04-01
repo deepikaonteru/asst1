@@ -9,10 +9,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
-#include "minHeap.h"
 #include "freqDict.h"
+#include "minHeap.h"
  
 void printAll(char*);
+void refresh(char*, int);
 void buildCodebook(char*);
 
 

@@ -66,6 +66,13 @@ void printAll(char* path) {
 
 }
 
+void refresh (char* buffer, int count){
+	int i;
+	for (i = 0; i < count; i++){
+		buffer[i] = '\0';
+	}
+}
+
 void buildCodebook(char* path)
 {    
     //open file
@@ -79,11 +86,13 @@ void buildCodebook(char* path)
 		return;
 	}
     
-    //tokenize each token including spaces right after word by creating freqTNode and creating freqTree and inserting TNode into our freqTree
-
-    //converting it to minHeap after done reading file
-
-    //write to new file created by in order traversing through min heap 
+    //read and tokenize file using buildHelper in build.c (and refresh)
+        //this gives us FreqTree
+    //convert to MinHeap
+    //free FreqTree
+    //Build HuffmanTree
+    //Use inorder traversal on HuffmanTree to write to .hcz file (involves making .hcz file)
+    //free MinHeap/HuffmanTree
     
 }
 
@@ -130,6 +139,9 @@ int main(int argc, char* argv[]) {
     {
         buildCodebook(argv[2]);
     }
+    else if(recursiveFlag == 1 && buildFlag == 1) {
+
+    }
 
     // Pointer for directory entry 
     /*
@@ -147,7 +159,7 @@ int main(int argc, char* argv[]) {
     closedir (pDir);
     */
 
-    printAll(argv[1]);
+    //printAll(argv[1]);
 
     return 0;
 
