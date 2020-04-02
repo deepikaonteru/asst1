@@ -121,9 +121,9 @@ TreeNode* createTreeNode(char *token, TreeNode *leftNode, TreeNode *rightNode) {
 void freeTree(TreeNode *root) {
 	if(root != NULL) {
 		freeTree(root->left);
-		freeTree(root->right);
 		free(root->token);
 		free(root);
+		freeTree(root->right);
 	}
 }
 
@@ -163,7 +163,9 @@ TreeNode* buildHuffmanTree(MinHeap *heap) {
 
 		HeapNode *freqNode = (HeapNode *) malloc(sizeof(HeapNode));
 		freqNode->count = min1->count + min2->count;
-		freqNode->data = createTreeNode("", min1->data, min2->data);
+		char numberNode[10];
+		sprintf(numberNode, "%d", freqNode->count);
+		freqNode->data = createTreeNode(numberNode, min1->data, min2->data);
 
 		free(min1);
 		free(min2);

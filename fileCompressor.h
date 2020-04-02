@@ -11,7 +11,13 @@
 #include <dirent.h>
 #include "freqDict.h"
 #include "minHeap.h"
- 
+#include "huffmanCodebook.h"
+
+typedef struct CodebookNode {
+    char* token;
+    char* bitSequence;
+} CodebookNode;
+
 void printAll(char*);
 void refresh(char*, int);
 void buildCodebook(char*);

@@ -56,7 +56,6 @@ FreqTree* readAndBuildTree(int fd) {
 		if(isspace(c) || bytesRead == 0) {
 
 			/*Create Node HERE*/
-            //printf("%c\n", buffer[0]);
             if(buffer[0] != '\0') {
                 tokFreqTreeRoot = insertIntoFreqTree(tokFreqTreeRoot, buffer);
             }
@@ -64,9 +63,6 @@ FreqTree* readAndBuildTree(int fd) {
                 refresh(buffer, 1);
             }
 
-			//insert(root, buffer);
-			//printf("%s\n", root->token);
-			//printf("%s\n", buffer);
 			refresh(buffer, 200);
 			tokLength=0;
 
@@ -124,20 +120,47 @@ void buildCodebook(char* path)
 		close(fd);
 		return;
 	}
-
-    FreqTree* tree = readAndBuildTree(fd);
-
-    printFreqTree(tree);
-
-
-    
-    //read and tokenize file using buildHelper in build.c (and refresh)
+     //read and tokenize file using buildHelper in build.c (and refresh)
         //this gives us FreqTree
     //convert to MinHeap
     //free FreqTree
     //Build HuffmanTree
-    //Use inorder traversal on HuffmanTree to write to .hcz file (involves making .hcz file)
+    //Use inorder traversal on HuffmanTree to make HuffmanCodebook file
     //free MinHeap/HuffmanTree
+
+    FreqTree* tree = readAndBuildTree(fd);
+    //printFreqTree(tree);
+
+    MinHeap* tokenMinHeap = convertFreqTreeToMinHeap(tree);
+    /*
+    int i;
+    for(i=0; i<(tokenMinHeap->heapSize); i ++) {
+        HeapNode* tmp = tokenMinHeap->nodes[i];
+        char* token = tmp->data->token;
+        int count = tmp->count;
+        printf("%s\t%d\n", token, count);
+    }
+    */
+    
+    freeFreqTree(tree);
+    
+    TreeNode* huffmanTree = buildHuffmanTree(tokenMinHeap);
+    //printTree(huffmanTree);
+
+    /*********************/
+    //We have huffmanTree
+    //Next: get encoded bitSequences using inorder traversal on the huffmanTree, store them into CodebookNode->bitSequence
+
+        //Algorithm: once inorder traversal hits a leaf node, store the char* token into CodebookNode->token
+                   //by the time it hits a leaf node, the recursion should have a full concatenated bitSequence to save to CodebookNode->bitSequence
+
+        //we need to figure out how exactly this will work (maybe a method that looks like printTree, but it needs to also concatenate 1's and 0's to CodebookNode->bitSequence)
+        //length of bitSequence array is determined by the height, height is determined by floor(log2(n))+1
+
+    //Once CodebookNode array is complete, it should be in the inorder form.
+    //Need to then write each node into the HuffmanCodebook file. Needs to be in the following form:
+        // CodebookNode->token\tCodebookNode->bitSequence
+    /*********************/
     
 }
 
