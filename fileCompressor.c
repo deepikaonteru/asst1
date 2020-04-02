@@ -11,37 +11,6 @@
 //    4. Implement the -b and -R flags and test writing out a Huffman code book
 //    5.  . ... etc.
 
-//printf("[%s]\n", pDirent->d_name);
-//opendir(pDirent); //can we open this as a directory?
-//if(no) { continue; }
-//if(yes) { ...(); }
-/*
-void printAll(DIR* pDir) {
-
-    struct dirent *pDirent;
-
-    while ((pDirent = readdir(pDir)) != NULL) {
-        
-        char* dName = pDirent->d_name;
-        if(dName[0] == '.') {
-            continue;
-        }
-        printf("[%s]\n", dName);
-
-        DIR* subDir = opendir(dName);
-        //int err = errno;
-        //does this return NULL? or does this run?
-        if(subDir == NULL) {
-            continue;
-        } 
-        else {
-            printAll(subDir);
-        }
-    }
-
-}
-*/
-
 void printAll(char* path) {
 
     char pathToNext[1000];
@@ -62,13 +31,83 @@ void printAll(char* path) {
         closedir(dir);
 
     }
-    //else printf("yer");
 
 }
 
-void refresh (char* buffer, int count){
+FreqTree* readAndBuildTree(int fd) {
+
+	char buffer[200];
 	int i;
-	for (i = 0; i < count; i++){
+	for(i=0; i<200; i ++) {
+
+		buffer[i]='\0';
+
+	}
+
+	int bytesRead;
+	int tokLength=0;
+	FreqTree *tokFreqTreeRoot = createFreqTree();
+
+	do {
+
+		char c=0;
+		bytesRead = read(fd, &c, sizeof(char));
+		//CHECKS
+		if(isspace(c) || bytesRead == 0) {
+
+			/*Create Node HERE*/
+            //printf("%c\n", buffer[0]);
+            if(buffer[0] != '\0') {
+                tokFreqTreeRoot = insertIntoFreqTree(tokFreqTreeRoot, buffer);
+            }
+            else {
+                refresh(buffer, 1);
+            }
+
+			//insert(root, buffer);
+			//printf("%s\n", root->token);
+			//printf("%s\n", buffer);
+			refresh(buffer, 200);
+			tokLength=0;
+
+			//whitespace
+			buffer[0] = c;
+            if(buffer[0] == ' ') {
+                buffer[0] = '!';
+                buffer[1] = 's';
+            }
+            else if(buffer[0] == '\t') {
+                buffer[0] = '!';
+                buffer[1] = 't';
+            }
+            else if(buffer[0] == '\n') {
+                buffer[0] = '!';
+                buffer[1] = 'n';
+            }
+            else if(buffer[0] == '\0') {
+                refresh(buffer, 1);
+                continue;
+            }
+			tokFreqTreeRoot = insertIntoFreqTree(tokFreqTreeRoot, buffer);
+            refresh(buffer, 2);
+
+		}
+		else {
+
+			buffer[tokLength] = c;
+			tokLength ++;
+
+		}
+
+	} while(bytesRead > 0);
+
+	return tokFreqTreeRoot;
+
+}
+
+void refresh(char* buffer, int count){
+	int i;
+	for (i = 0; i < count; i++) {
 		buffer[i] = '\0';
 	}
 }
@@ -85,6 +124,12 @@ void buildCodebook(char* path)
 		close(fd);
 		return;
 	}
+
+    FreqTree* tree = readAndBuildTree(fd);
+
+    printFreqTree(tree);
+
+
     
     //read and tokenize file using buildHelper in build.c (and refresh)
         //this gives us FreqTree

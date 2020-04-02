@@ -38,8 +38,9 @@ FreqTNode *insertTNode(FreqTNode *root, char *token, int *treeCount) {
 	return root;
 }
 
-void insertIntoFreqTree(FreqTree *root, char *token) {
+FreqTree* insertIntoFreqTree(FreqTree *root, char *token) {
 	root->root = insertTNode(root->root, token, &(root->size));
+	return root;
 }
 
 // in FreqTree, the token is compared lexicograpically, while MinHeap comparison is based on the freq (count) of token in file
@@ -69,10 +70,15 @@ MinHeap* convertFreqTreeToMinHeap(FreqTree *tree) {
 
 void printFreqTNode(FreqTNode *root) {
 	if(root != NULL) {
+		printFreqTNode(root->left);
+		printf("%s : %d\n", root->token, root->freq);
+		printFreqTNode(root->right);
+		/*
 		freeFreqTNode(root->left);
 		freeFreqTNode(root->right);
 		free(root->token);
 		free(root);
+		*/
 	}	
 }
 
@@ -83,9 +89,9 @@ void printFreqTree(FreqTree *tree) {
 void freeFreqTNode(FreqTNode *root) {
 	if(root != NULL) {
 		freeFreqTNode(root->left);
-		freeFreqTNode(root->right);
 		free(root->token);
 		free(root);
+		freeFreqTNode(root->right);
 	}	
 }
 

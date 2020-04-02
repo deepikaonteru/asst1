@@ -20,7 +20,7 @@ typedef struct FreqTree
 FreqTree *createFreqTree();
 FreqTNode *createFreqTNode(char *token);
 FreqTNode *insertTNode(FreqTNode *root, char *token, int *treeCount);
-void insertIntoFreqTree(FreqTree *root, char *token);
+FreqTree* insertIntoFreqTree(FreqTree *root, char *token);
 void insertLikeMinHeap(MinHeap* heap, FreqTNode *node);
 MinHeap* convertFreqTreeToMinHeap(FreqTree *tree);
 void printFreqTNode(FreqTNode *root) ;

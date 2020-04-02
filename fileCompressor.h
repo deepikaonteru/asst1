@@ -15,6 +15,6 @@
 void printAll(char*);
 void refresh(char*, int);
 void buildCodebook(char*);
-
+FreqTree* readAndBuildTree(int);
 
 #endif
