@@ -34,6 +34,20 @@ void printAll(char* path) {
 
 }
 
+int fileExists(char* fName)
+{
+    struct stat buf;
+    int res = stat(fName, &buf);
+    if(res == 0)
+    {
+        return 1; //file exists
+    }
+    else
+    {
+        return 0; //file does not exist
+    }
+}
+
 FreqTree* readAndBuildTree(int fd) {
 
 	char buffer[200];
@@ -277,7 +291,12 @@ void buildCodebook(char* path)
     */
 
     //Now that we have CodebookNode array complete, loop through each, write to HuffmanCodebook file
-    fd = open("HuffmanCodebook", O_WRONLY | O_CREAT, "w");
+    //int exist = fileExists("HuffmanCodebook"); 
+    //if 1, exists and needs to be overwritten
+    //if 0, does not exist and needs to be created
+    remove("HuffmanCodebook");
+    fd = open("HuffmanCodebook", O_WRONLY | O_CREAT, 00600);
+    printf("%d\n", fd);
     write(fd, "!\n", 2);
     for(i = 0; i<numLeafNodes; i ++)
     {
@@ -288,7 +307,6 @@ void buildCodebook(char* path)
         write(fd, "\t", 1);
         write(fd, tokenBuf, strlen(tokenBuf));
         write(fd, "\n", 1);
-
     }
     write(fd, "\n", 1);
     close(fd);
@@ -311,6 +329,23 @@ void buildCodebook(char* path)
         // CodebookNode->token\tCodebookNode->bitSequence
     /*********************/
     
+}
+
+void recursiveBuildCodebook(char* path)
+{
+    DIR* dir = opendir(path);
+    if(dir)
+    {
+        printf("dir exists\n");
+    }
+    else if(errno == ENOENT)
+    {
+        printf("dir does not exist\n");
+    }
+    else
+    {
+        printf("dir failed to open due to an unknown reason\n");
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -359,7 +394,7 @@ int main(int argc, char* argv[]) {
 
     else if(recursiveFlag == 1 && buildFlag == 1)
     {
-
+        recursiveBuildCodebook(argv[3]);
     }
     
     else if(recursiveFlag == 0 && compressFlag == 1)

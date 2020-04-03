@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include "freqDict.h"
 #include "minHeap.h"
 
@@ -19,6 +20,7 @@ typedef struct CodebookNode {
 
 void printAll(char*);
 void refresh(char*, int);
+void recursiveBuildCodebook(char*);
 void buildCodebook(char*);
 void freeCodebookNodes(CodebookNode*);
 void getTokens(TreeNode*, CodebookNode*);
@@ -26,6 +28,7 @@ void getBitSequences(TreeNode*, CodebookNode*, char*, int);
 void freeCodebookNodes(CodebookNode*);
 int findNumLeafNodes(TreeNode*);
 int findHeight(TreeNode*);
+int fileExists(char*);
 FreqTree* readAndBuildTree(int);
 
 #endif
