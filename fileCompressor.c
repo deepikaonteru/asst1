@@ -108,6 +108,100 @@ void refresh(char* buffer, int count){
 	}
 }
 
+int findNumLeafNodes(TreeNode* root)
+{
+    if(root == NULL)
+    {
+        return 0;
+    }
+    if(root->left == NULL && root->right == NULL)
+    {
+        return 1;
+    }
+    else
+    {
+        return findNumLeafNodes(root->left) + findNumLeafNodes(root->right);
+    }
+}
+
+int findHeight(TreeNode* root)
+{
+    if(root == NULL)
+    {
+        return 0;
+    }
+    else
+    {
+        int leftHeight = findHeight(root->left);
+        int rightHeight = findHeight(root->right);
+
+        if(leftHeight > rightHeight)
+        {
+            return leftHeight + 1;
+        }
+        else
+        {
+            return rightHeight + 1;
+        }
+    }
+}
+
+int indexLeafNodeOne = 0;
+
+void getTokens(TreeNode* root, CodebookNode* leafNodes)
+{
+    if(root->left) 
+    {
+        //printf("yerLeft\n");
+        getTokens(root->left, leafNodes);
+    }
+    if(root->right)
+    {
+        //printf("yerRight\n");
+        getTokens(root->right, leafNodes);    
+    }
+    if(!(root->left || root->right))
+    {
+        leafNodes[indexLeafNodeOne].token = root->token;
+        indexLeafNodeOne ++;
+    }
+}
+
+int indexLeafNodeTwo = 0;
+
+void getBitSequences(TreeNode* root, CodebookNode* leafNodes, char* bitSequence, int indexBitSequence)
+{
+    if(root->left)
+    {
+        //leafNodes[indexLeafNodeTwo].bitSequence[indexBitSequence] = '0';
+        bitSequence[indexBitSequence] = '0';
+        getBitSequences(root->left, leafNodes, bitSequence, indexBitSequence + 1);
+    }
+    if(root->right)
+    {
+        //leafNodes[indexLeafNodeTwo].bitSequence[indexBitSequence] = '1';
+        bitSequence[indexBitSequence] = '1';
+        getBitSequences(root->right, leafNodes, bitSequence, indexBitSequence + 1);
+    }
+    if(!(root->left || root->right))
+    {
+        leafNodes[indexLeafNodeTwo].bitSequence = strdup(bitSequence);
+        memset(leafNodes[indexLeafNodeTwo].bitSequence + indexBitSequence, '\0', strlen(leafNodes[indexLeafNodeTwo].bitSequence) - indexBitSequence);
+        indexLeafNodeTwo ++;
+        return;
+    }
+}
+
+//CodebookNode not populated inOrder (indexLeafNode not incrementing correctly)
+//
+
+void freeCodebookNodes(CodebookNode* leafNodes)
+{
+    free(leafNodes->token);
+    free(leafNodes->bitSequence);
+    free(leafNodes);
+}
+
 void buildCodebook(char* path)
 {    
     //open file
@@ -129,6 +223,7 @@ void buildCodebook(char* path)
     //free MinHeap/HuffmanTree
 
     FreqTree* tree = readAndBuildTree(fd);
+    close(fd);
     //printFreqTree(tree);
 
     MinHeap* tokenMinHeap = convertFreqTreeToMinHeap(tree);
@@ -146,6 +241,60 @@ void buildCodebook(char* path)
     
     TreeNode* huffmanTree = buildHuffmanTree(tokenMinHeap);
     //printTree(huffmanTree);
+    //printf("\n");
+
+    //find number of leaf nodes
+    int numLeafNodes = findNumLeafNodes(huffmanTree);
+    //printf("%d\n", numLeafNodes);
+
+    //Use number of leaf nodes to create an array of size numLeafNodes, this is an array of CodebookNodes
+    CodebookNode* leafNodes = (CodebookNode*)(malloc(numLeafNodes * sizeof(CodebookNode)));
+
+    //find height of huffmanTree
+    int h = findHeight(huffmanTree) - 1;
+    //printf("%d\n", h);
+
+    //h is the max number of turns possible to reach a leaf node
+    int i;
+    for(i = 0; i<numLeafNodes; i ++) 
+    {
+        leafNodes[i].bitSequence = (char*)(malloc(h * sizeof(char)));
+        memset(leafNodes[i].bitSequence, '\0', h * sizeof(char));
+    }
+
+    //fill in token and bitSequence information in CodebookNodes array
+    getTokens(huffmanTree, leafNodes);
+
+    char* bitSequence = (char*)(malloc(h * sizeof(char)));
+    memset(bitSequence, '\0', h * sizeof(char));
+    getBitSequences(huffmanTree, leafNodes, bitSequence, 0);
+
+    /*
+    for(i=0; i<numLeafNodes; i ++) {
+        printf("%s (%d) %s\n", leafNodes[i].token, i, leafNodes[i].bitSequence);
+    }
+    printf("\n");
+    */
+
+    //Now that we have CodebookNode array complete, loop through each, write to HuffmanCodebook file
+    fd = open("HuffmanCodebook", O_WRONLY | O_CREAT, "w");
+    write(fd, "!\n", 2);
+    for(i = 0; i<numLeafNodes; i ++)
+    {
+        char* bitSequenceBuf = leafNodes[i].bitSequence;
+        char* tokenBuf = leafNodes[i].token;
+
+        write(fd, bitSequenceBuf, strlen(bitSequenceBuf));
+        write(fd, "\t", 1);
+        write(fd, tokenBuf, strlen(tokenBuf));
+        write(fd, "\n", 1);
+
+    }
+    write(fd, "\n", 1);
+    close(fd);
+
+    //QUESTION: Do we gotta overwrite existing HuffmanCodebook file if we use the build
+    //functionality again?
 
     /*********************/
     //We have huffmanTree
@@ -207,8 +356,23 @@ int main(int argc, char* argv[]) {
     {
         buildCodebook(argv[2]);
     }
-    else if(recursiveFlag == 1 && buildFlag == 1) {
 
+    else if(recursiveFlag == 1 && buildFlag == 1)
+    {
+
+    }
+    
+    else if(recursiveFlag == 0 && compressFlag == 1)
+    {
+        //OPTION I
+        //Read through HuffmanCodebook file and populate a CodebookNode array
+
+        //OPTION II
+        //Read through HuffmanCodebook file and populate a CodebookNode BST
+
+        //After either option, read through file. For each token we see, concatenate the
+        //corresponding bit sequence to a .hcz file
+        //2 file descriptors running simultaneously?
     }
 
     // Pointer for directory entry 

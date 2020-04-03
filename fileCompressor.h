@@ -11,7 +11,6 @@
 #include <dirent.h>
 #include "freqDict.h"
 #include "minHeap.h"
-#include "huffmanCodebook.h"
 
 typedef struct CodebookNode {
     char* token;
@@ -21,6 +20,12 @@ typedef struct CodebookNode {
 void printAll(char*);
 void refresh(char*, int);
 void buildCodebook(char*);
+void freeCodebookNodes(CodebookNode*);
+void getTokens(TreeNode*, CodebookNode*);
+void getBitSequences(TreeNode*, CodebookNode*, char*, int);
+void freeCodebookNodes(CodebookNode*);
+int findNumLeafNodes(TreeNode*);
+int findHeight(TreeNode*);
 FreqTree* readAndBuildTree(int);
 
 #endif
