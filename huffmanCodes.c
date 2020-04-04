@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "huffmanCodes.h"
+
 HuffmanCodesTree *createHuffmanCodesTree() {
 	HuffmanCodesTree *tree = (HuffmanCodesTree *) malloc(sizeof(HuffmanCodesTree));
 	tree->root = NULL;
@@ -19,11 +24,7 @@ HuffmanCodesTNode *insertHuffmanCodesTNode(HuffmanCodesTNode *root, char *token,
 		root = createHuffmanCodesTNode(token, bitSequence);
 		*treeCount += 1;
 	} else {
-        // if in tree, update frequency
-		/*if(strcmp(root->token, token) == 0) {
-			root->freq += 1; */
-        // if root->token is less than token, insert token on root's right
-		} if(strcmp(root->token, token) < 0) {
+	    if(strcmp(root->token, token) < 0) {
 			root->right = insertHuffmanCodesTNode(root->right, token, bitSequence, treeCount);
         // if root->token is greater than token, insert token on root's right
 		} else {
@@ -31,22 +32,38 @@ HuffmanCodesTNode *insertHuffmanCodesTNode(HuffmanCodesTNode *root, char *token,
 		}
 	}
 	return root;
-
+}
 
 HuffmanCodesTree* insertIntoHuffmanCodesTree(HuffmanCodesTree *root, char *token, char *bitSequence) {
 	root->root = insertHuffmanCodesTNode(root->root, token, bitSequence, &(root->size));
 	return root;
 }
 
-HuffmanCodesTree *readHuffmanCodebook() {
+HuffmanCodesTree *readHuffmanCodebook(char* path) {
 
-	int rd = open(fileName, O_RDONLY);
-    if(rd < 0){
-        printf("Error in reading file: %s\n", fileName);
-        return;
+	int rd = open(path, O_RDONLY);
+    if(rd == -1) { //if file does not exist
+	    int errsv = errno;
+		printf("Fatal Error: file \"");
+		printf("%s\" ", path);
+		printf("does not exist\n");
+		close(rd);
+		return NULL;
+	}
+    
+    //CHECK IF FILE IS EMPTY
+    char c;
+    int bytesRead = read(rd, &c, 1);
+    if(bytesRead == 0)
+    {
+        printf("Warning: File is empty!\n");
+        close(rd);
+        return NULL;
     }
+    close(rd);
+    rd = open(path, O_RDONLY);
 	
-	HuffmanCodesTree *HuffmanCodesTree* = createHuffmanCodesTree();
+	HuffmanCodesTree *HuffmanCodesTree = createHuffmanCodesTree();
 	char token[200], bitSequence[200];
 	int bitSequenceLength = 0;
 	int tokenLength = 0;
@@ -54,6 +71,7 @@ HuffmanCodesTree *readHuffmanCodebook() {
 	int bitSequenceStarted = 1;
 	int tokenStarted = 0;
 
+	int i;
 	for(i=0; i<200; i ++) {
 		token[i]='\0';
 	}
@@ -62,57 +80,42 @@ HuffmanCodesTree *readHuffmanCodebook() {
 		bitSequence[i]='\0';
 	}
 
-
-	char c;
+	read(rd, &c, 1);
+	read(rd, &c, 1);
     while (read(rd, &c, 1) != 0) {
 		// format of this file is <bitSequence> <tab> <token>
 		// if line contains a new line at last, remove it.
 		if((c == '\n') && tokenStarted) {
 			// end of a line and has just read token so set
-		
-			/* THINK ABOUT LOGIC HERE */
-
-			//whitespace checks
-			buffer[0] = c;
-            if(buffer[0] == ' ') {
-                buffer[0] = '!';
-                buffer[1] = 's';
-            }
-            else if(buffer[0] == '\t') {
-                buffer[0] = '!';
-                buffer[1] = 't';
-            }
-            else if(buffer[0] == '\n') {
-                buffer[0] = '!';
-                buffer[1] = 'n';
-            }
-            else if(buffer[0] == '\0') {
-                refresh(buffer, 1);
-                continue;
-            }
 
 			// insert the token & code into HuffmanCodesTree
-			insertHuffmanCodesTNode(HuffmanCodesTree, token, bitSequence);
+			HuffmanCodesTree = insertIntoHuffmanCodesTree(HuffmanCodesTree, token, bitSequence);
 
-			tokenLength = 0;
-			bitSequenceLength = 0;
+			//reset flags
 			tokenStarted = 0;
 			bitSequenceStarted = 1;
+
+			memset(bitSequence, '\0', bitSequenceLength * sizeof(char));
+			memset(token, '\0', tokenLength * sizeof(char));
+
+			bitSequenceLength = 0;
+			tokenLength = 0;
 		} else if(c == '\t' && bitSequenceStarted) {
 			// token starts now
 			tokenStarted = 1;
 			bitSequenceStarted = 0;
 		} else if(bitSequenceStarted) {
-				bitSequence[bitSequenceLength++] = c;
+			bitSequence[bitSequenceLength] = c;
+			bitSequenceLength ++;
 		} else if(tokenStarted) {
-			token[tokenLength++] = c;
+			token[tokenLength] = c;
+			tokenLength ++;
 		}		
 	}
 	close(rd);
 	return HuffmanCodesTree;
 
 }
-
 
 char* findToken(HuffmanCodesTree *HuffmanCodesTree, char *token, char *bitSequence) {
 	HuffmanCodesTNode *start = HuffmanCodesTree->root;
@@ -129,6 +132,19 @@ char* findToken(HuffmanCodesTree *HuffmanCodesTree, char *token, char *bitSequen
 		}
 	}
 	return NULL;
+}
+
+void printHuffmanCodesTNode(HuffmanCodesTNode *root) {
+	if(root != NULL) {
+		printHuffmanCodesTNode(root->left);
+		printf("%s : %s\n", root->bitSequence, root->token);
+		printHuffmanCodesTNode(root->right);
+	}	
+}
+
+
+void printHuffmanCodesTree(HuffmanCodesTree *tree) {
+	printHuffmanCodesTNode(tree->root);
 }
 
 

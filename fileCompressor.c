@@ -307,8 +307,18 @@ void buildCodebook(char* path)
     //int exist = fileExists("HuffmanCodebook"); 
     //if 1, exists and needs to be overwritten
     //if 0, does not exist and needs to be created
-    remove("HuffmanCodebook");
-    fd = open("HuffmanCodebook", O_WRONLY | O_CREAT, 00600);
+    char huffmanCodebookPath[1000];
+    memset(huffmanCodebookPath, '\0', 1000 * sizeof(char));
+    strcpy(huffmanCodebookPath, path);
+    int sizeOfPath = strlen(huffmanCodebookPath) - 1;
+    while(huffmanCodebookPath[sizeOfPath] != '/')
+    {
+        huffmanCodebookPath[sizeOfPath] = '\0';
+        sizeOfPath --;
+    }
+    strcat(huffmanCodebookPath + sizeOfPath, "/HuffmanCodebook");
+    remove(huffmanCodebookPath);
+    fd = open(huffmanCodebookPath, O_WRONLY | O_CREAT, 00600);
     //printf("%d\n", fd);
     write(fd, "!\n", 2);
     for(i = 0; i<numLeafNodes; i ++)
@@ -478,6 +488,12 @@ void recursiveBuildCodebook(char* path)
     }
     //printAll(path);
 
+    //Remove currently existing HuffmanCodebook file
+    char huffmanCodebookPath[1000];
+    strcpy(huffmanCodebookPath, path);
+    strcat(huffmanCodebookPath, "/HuffmanCodebook");
+    remove(huffmanCodebookPath);
+
     //Using parent directory, iterate through all files, create masterTree
     FreqTree* masterTree = createFreqTree();
     buildMasterTree(dir, masterTree, path);
@@ -529,8 +545,7 @@ void recursiveBuildCodebook(char* path)
     //int exist = fileExists("HuffmanCodebook"); 
     //if 1, exists and needs to be overwritten
     //if 0, does not exist and needs to be created
-    remove("HuffmanCodebook");
-    int fd = open("HuffmanCodebook", O_WRONLY | O_CREAT, 00600);
+    int fd = open(huffmanCodebookPath, O_WRONLY | O_CREAT, 00600);
     //printf("%d\n", fd);
     write(fd, "!\n", 2);
     for(i = 0; i<numLeafNodes; i ++)
@@ -545,6 +560,105 @@ void recursiveBuildCodebook(char* path)
     }
     write(fd, "\n", 1);
     close(fd);
+}
+
+void compress(char* path, char* codebook)
+{
+    //Read HuffmanCodebook file
+    HuffmanCodesTree* huffmanCodesTree = readHuffmanCodebook(codebook);
+    if(huffmanCodesTree == NULL)
+    {
+        printf("There was en error in opening the codebook\n");
+        return;
+    }
+
+    //printHuffmanCodesTree(huffmanCodesTree);
+    //Now we have HuffmanCodesTree
+
+    //open two files: path to read from, new .hcz file to write into
+    int fdRead = open(path, O_RDONLY);
+    if(fdRead == -1) { //if file does not exist
+	    int errsv = errno;
+		printf("Fatal Error: file \"");
+		printf("%s\" ", path);
+		printf("does not exist\n");
+		close(fdRead);
+		return;
+	}
+    
+    //CHECK IF FILE IS EMPTY
+    char c;
+    int bytesRead = read(fdRead, &c, 1);
+    if(bytesRead == 0)
+    {
+        printf("Warning: File is empty!\n");
+        close(fdRead);
+        return;
+    }
+    close(fdRead);
+    fdRead = open(path, O_RDONLY);
+
+    //get path for .hcz file
+    char compressedFilePath[1000];
+    strcpy(compressedFilePath, path);
+    strcat(compressedFilePath, ".hcz");
+    
+    //create .hcz file to prepare for writing
+    remove(compressedFilePath);
+    int fdWrite = open(compressedFilePath, O_WRONLY | O_CREAT, 00600);
+
+
+/*
+	do {
+
+		char c=0;
+		bytesRead = read(fd, &c, sizeof(char));
+        //printf("%d\n", bytesRead);
+		//CHECKS
+		if(isspace(c) || bytesRead == 0) {
+
+			//Create Node HERE
+            if(buffer[0] != '\0') {
+                masterTree = insertIntoFreqTree(masterTree, buffer);
+            }
+            else {
+                refresh(buffer, 1);
+            }
+
+			refresh(buffer, 200);
+			tokLength=0;
+
+			//whitespace
+			buffer[0] = c;
+            if(buffer[0] == ' ') {
+                buffer[0] = '!';
+                buffer[1] = 's';
+            }
+            else if(buffer[0] == '\t') {
+                buffer[0] = '!';
+                buffer[1] = 't';
+            }
+            else if(buffer[0] == '\n') {
+                buffer[0] = '!';
+                buffer[1] = 'n';
+            }
+            else if(buffer[0] == '\0') {
+                refresh(buffer, 1);
+                continue;
+            }
+			masterTree = insertIntoFreqTree(masterTree, buffer);
+            refresh(buffer, 2);
+
+		}
+		else {
+
+			buffer[tokLength] = c;
+			tokLength ++;
+
+		}
+
+	} while(bytesRead > 0);
+*/
 }
 
 int main(int argc, char* argv[]) {
@@ -607,6 +721,7 @@ int main(int argc, char* argv[]) {
         //After either option, read through file. For each token we see, concatenate the
         //corresponding bit sequence to a .hcz file
         //2 file descriptors running simultaneously?
+        compress(argv[2], argv[3]);
     }
 
     // Pointer for directory entry 
