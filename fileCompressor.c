@@ -20,7 +20,7 @@ void printAll(char* path) {
 
         while((entry = readdir(dir)) != NULL) {
             if(strcmp(entry->d_name, ".")!=0 && strcmp(entry->d_name, "..")!=0) {
-                printf("[%s]\n", entry->d_name);
+                printf("%s\n", entry->d_name);
                 strcpy(pathToNext, path);
                 strcat(pathToNext, "/");
                 strcat(pathToNext, entry->d_name);
@@ -219,6 +219,7 @@ void freeCodebookNodes(CodebookNode* leafNodes)
 void buildCodebook(char* path)
 {    
     //open file
+    //CHECK IF FILE DOES NOT EXIST
     int fd = open(path, O_RDONLY);
     if(fd == -1) { //if file does not exist
 	    int errsv = errno;
@@ -228,6 +229,18 @@ void buildCodebook(char* path)
 		close(fd);
 		return;
 	}
+    
+    //CHECK IF FILE IS EMPTY
+    char c;
+    int bytesRead = read(fd, &c, 1);
+    if(bytesRead == 0)
+    {
+        printf("Warning: File is empty!\n");
+        close(fd);
+        return;
+    }
+    close(fd);
+    fd = open(path, O_RDONLY);
      //read and tokenize file using buildHelper in build.c (and refresh)
         //this gives us FreqTree
     //convert to MinHeap
@@ -296,7 +309,7 @@ void buildCodebook(char* path)
     //if 0, does not exist and needs to be created
     remove("HuffmanCodebook");
     fd = open("HuffmanCodebook", O_WRONLY | O_CREAT, 00600);
-    printf("%d\n", fd);
+    //printf("%d\n", fd);
     write(fd, "!\n", 2);
     for(i = 0; i<numLeafNodes; i ++)
     {
@@ -331,21 +344,207 @@ void buildCodebook(char* path)
     
 }
 
+void recReadAndBuildTree(int fd, FreqTree* masterTree)
+{
+	char buffer[200];
+	int i;
+	for(i=0; i<200; i ++) {
+
+		buffer[i]='\0';
+
+	}
+
+	int bytesRead;
+	int tokLength=0;
+
+	do {
+
+		char c=0;
+		bytesRead = read(fd, &c, sizeof(char));
+        //printf("%d\n", bytesRead);
+		//CHECKS
+		if(isspace(c) || bytesRead == 0) {
+
+			/*Create Node HERE*/
+            if(buffer[0] != '\0') {
+                masterTree = insertIntoFreqTree(masterTree, buffer);
+            }
+            else {
+                refresh(buffer, 1);
+            }
+
+			refresh(buffer, 200);
+			tokLength=0;
+
+			//whitespace
+			buffer[0] = c;
+            if(buffer[0] == ' ') {
+                buffer[0] = '!';
+                buffer[1] = 's';
+            }
+            else if(buffer[0] == '\t') {
+                buffer[0] = '!';
+                buffer[1] = 't';
+            }
+            else if(buffer[0] == '\n') {
+                buffer[0] = '!';
+                buffer[1] = 'n';
+            }
+            else if(buffer[0] == '\0') {
+                refresh(buffer, 1);
+                continue;
+            }
+			masterTree = insertIntoFreqTree(masterTree, buffer);
+            refresh(buffer, 2);
+
+		}
+		else {
+
+			buffer[tokLength] = c;
+			tokLength ++;
+
+		}
+
+	} while(bytesRead > 0);
+
+}
+
+void buildMasterTree(DIR* parentDir, FreqTree* masterTree, char* path)
+{
+    struct dirent* currElement = NULL;
+    readdir(parentDir);
+    readdir(parentDir);
+    currElement = readdir(parentDir);
+
+    while(currElement != NULL)
+    {
+        char pathToFile[1000];
+        //if file
+        if(currElement->d_type == DT_REG)
+        {
+            strcpy(pathToFile, path);
+            strcat(pathToFile, "/");
+            strcat(pathToFile, currElement->d_name);
+            //printf("%s\n", pathToFile);
+            int fd = open(pathToFile, O_RDONLY);
+            //check immediately if file is empty
+            char c;
+            int bytesRead = read(fd, &c, 1);
+            //printf("%d\n", bytesRead);
+            if(bytesRead == 0)
+            {
+                close(fd);
+                currElement = readdir(parentDir);
+                continue;
+            }
+            close(fd);
+            fd = open(pathToFile, O_RDONLY);
+            recReadAndBuildTree(fd, masterTree);
+            close(fd);
+        }
+        //else if directory
+        else if(currElement->d_type == DT_DIR)
+        {
+            //printf("DIRECTORY!\n");
+            strcpy(pathToFile, path);
+            strcat(pathToFile, "/");
+            strcat(pathToFile, currElement->d_name);
+            DIR* subDir = opendir(pathToFile);
+            buildMasterTree(subDir, masterTree, pathToFile);
+            closedir(subDir);
+        }
+
+        currElement = readdir(parentDir);
+    }
+}
+
 void recursiveBuildCodebook(char* path)
 {
+    //Determine of path is valid directory
     DIR* dir = opendir(path);
-    if(dir)
+    if(dir) 
     {
-        printf("dir exists\n");
+
     }
     else if(errno == ENOENT)
     {
         printf("dir does not exist\n");
+        closedir(dir);
+        return;
     }
     else
     {
         printf("dir failed to open due to an unknown reason\n");
     }
+    //printAll(path);
+
+    //Using parent directory, iterate through all files, create masterTree
+    FreqTree* masterTree = createFreqTree();
+    buildMasterTree(dir, masterTree, path);
+    closedir(dir);
+    //printFreqTree(masterTree);
+
+    MinHeap* tokenMinHeap = convertFreqTreeToMinHeap(masterTree);
+    freeFreqTree(masterTree);
+
+    /*
+    int i;
+    for(i=0; i<(tokenMinHeap->heapSize); i ++) {
+        HeapNode* tmp = tokenMinHeap->nodes[i];
+        char* token = tmp->data->token;
+        int count = tmp->count;
+        printf("%s\t%d\n", token, count);
+    }
+    */
+    
+    TreeNode* masterHuffmanTree = buildHuffmanTree(tokenMinHeap);
+    //printTree(huffmanTree);
+    //printf("\n");
+
+    //find number of leaf nodes
+    int numLeafNodes = findNumLeafNodes(masterHuffmanTree);
+    //printf("%d\n", numLeafNodes);
+
+    //Use number of leaf nodes to create an array of size numLeafNodes, this is an array of CodebookNodes
+    CodebookNode* leafNodes = (CodebookNode*)(malloc(numLeafNodes * sizeof(CodebookNode)));
+
+    //find height of huffmanTree
+    int h = findHeight(masterHuffmanTree) - 1;
+
+    int i;
+    for(i = 0; i<numLeafNodes; i ++) 
+    {
+        leafNodes[i].bitSequence = (char*)(malloc(h * sizeof(char)));
+        memset(leafNodes[i].bitSequence, '\0', h * sizeof(char));
+    }
+
+    //fill in token and bitSequence information in CodebookNodes array
+    getTokens(masterHuffmanTree, leafNodes);
+
+    char* bitSequence = (char*)(malloc(h * sizeof(char)));
+    memset(bitSequence, '\0', h * sizeof(char));
+    getBitSequences(masterHuffmanTree, leafNodes, bitSequence, 0);
+
+    //Now that we have CodebookNode array complete, loop through each, write to HuffmanCodebook file
+    //int exist = fileExists("HuffmanCodebook"); 
+    //if 1, exists and needs to be overwritten
+    //if 0, does not exist and needs to be created
+    remove("HuffmanCodebook");
+    int fd = open("HuffmanCodebook", O_WRONLY | O_CREAT, 00600);
+    //printf("%d\n", fd);
+    write(fd, "!\n", 2);
+    for(i = 0; i<numLeafNodes; i ++)
+    {
+        char* bitSequenceBuf = leafNodes[i].bitSequence;
+        char* tokenBuf = leafNodes[i].token;
+
+        write(fd, bitSequenceBuf, strlen(bitSequenceBuf));
+        write(fd, "\t", 1);
+        write(fd, tokenBuf, strlen(tokenBuf));
+        write(fd, "\n", 1);
+    }
+    write(fd, "\n", 1);
+    close(fd);
 }
 
 int main(int argc, char* argv[]) {
