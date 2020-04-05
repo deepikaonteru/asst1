@@ -435,6 +435,15 @@ void buildMasterTree(DIR* parentDir, FreqTree* masterTree, char* path)
             strcpy(pathToFile, path);
             strcat(pathToFile, "/");
             strcat(pathToFile, currElement->d_name);
+            char* extensionPtr = strrchr(pathToFile, '.');
+            if(extensionPtr != NULL)
+            {
+                if(strcmp(extensionPtr, ".hcz") == 0)
+                {
+                    currElement = readdir(parentDir);
+                    continue;
+                }
+            }
             //printf("%s\n", pathToFile);
             int fd = open(pathToFile, O_RDONLY);
             //check immediately if file is empty
@@ -582,6 +591,7 @@ void compress(char* path, char* codebook)
 		printf("Fatal Error: file \"");
 		printf("%s\" ", path);
 		printf("does not exist\n");
+        freeHuffmanCodesTree(huffmanCodesTree);
 		close(fdRead);
 		return;
 	}
@@ -592,6 +602,7 @@ void compress(char* path, char* codebook)
     if(bytesRead == 0)
     {
         printf("Warning: File is empty!\n");
+        freeHuffmanCodesTree(huffmanCodesTree);
         close(fdRead);
         return;
     }
@@ -607,58 +618,139 @@ void compress(char* path, char* codebook)
     remove(compressedFilePath);
     int fdWrite = open(compressedFilePath, O_WRONLY | O_CREAT, 00600);
 
-
-/*
+    //start to read from file
+    char tokenRead[200];
+    memset(tokenRead, '\0', 200 * sizeof(char));
+    int tokLength = 0;
 	do {
 
-		char c=0;
-		bytesRead = read(fd, &c, sizeof(char));
+		c = 0;
+		bytesRead = read(fdRead, &c, sizeof(char));
         //printf("%d\n", bytesRead);
 		//CHECKS
-		if(isspace(c) || bytesRead == 0) {
-
-			//Create Node HERE
-            if(buffer[0] != '\0') {
-                masterTree = insertIntoFreqTree(masterTree, buffer);
-            }
-            else {
-                refresh(buffer, 1);
+		if(isspace(c) || bytesRead == 0)
+        {
+            //First step: write bitSequence found from tree into .hcz file
+            if(tokenRead[0] != '\0') {
+                char* bitSequenceToWrite = findBitSequence(huffmanCodesTree, tokenRead);
+                write(fdWrite, bitSequenceToWrite, strlen(bitSequenceToWrite));
             }
 
-			refresh(buffer, 200);
-			tokLength=0;
-
-			//whitespace
-			buffer[0] = c;
-            if(buffer[0] == ' ') {
-                buffer[0] = '!';
-                buffer[1] = 's';
+            //Second step: find bitSequence of space character, write into .hcz file
+            char* bitSequenceSpaceChar;
+            if(c == ' ') {
+                bitSequenceSpaceChar = findBitSequence(huffmanCodesTree, "!s");
             }
-            else if(buffer[0] == '\t') {
-                buffer[0] = '!';
-                buffer[1] = 't';
+            else if(c == '\t') {
+                bitSequenceSpaceChar = findBitSequence(huffmanCodesTree, "!t");
             }
-            else if(buffer[0] == '\n') {
-                buffer[0] = '!';
-                buffer[1] = 'n';
+            else if(c == '\n') {
+                bitSequenceSpaceChar = findBitSequence(huffmanCodesTree, "!n");
             }
-            else if(buffer[0] == '\0') {
-                refresh(buffer, 1);
+            else if(c == '\0') {
+                memset(tokenRead, '\0', tokLength);
                 continue;
             }
-			masterTree = insertIntoFreqTree(masterTree, buffer);
-            refresh(buffer, 2);
+            if(bitSequenceSpaceChar != NULL)
+            {
+                write(fdWrite, bitSequenceSpaceChar, strlen(bitSequenceSpaceChar));
+            }
 
-		}
-		else {
+            //Third step: refresh tokenRead to read next token
+            memset(tokenRead, '\0', tokLength * sizeof(char));
+            tokLength = 0;
 
-			buffer[tokLength] = c;
+        }
+		else 
+        {
+			tokenRead[tokLength] = c;
 			tokLength ++;
-
 		}
 
 	} while(bytesRead > 0);
-*/
+
+    freeHuffmanCodesTree(huffmanCodesTree);
+    close(fdRead);
+    close(fdWrite);
+
+}
+
+void compressEachFile(DIR* parentDir, char* path, char* codebook)
+{
+    struct dirent* currElement = NULL;
+    readdir(parentDir);
+    readdir(parentDir);
+    currElement = readdir(parentDir);
+
+    while(currElement != NULL)
+    {
+        char pathToFile[1000];
+        //if file
+        if(currElement->d_type == DT_REG)
+        {
+            //do ALL THE CHECKS
+            strcpy(pathToFile, path);
+            strcat(pathToFile, "/");
+            strcat(pathToFile, currElement->d_name);
+            char* extensionPtr = strrchr(pathToFile, '.');
+            if(extensionPtr != NULL)
+            {
+                if(strcmp(extensionPtr, ".hcz") == 0)
+                {
+                    currElement = readdir(parentDir);
+                    continue;
+                }
+            }
+            //printf("%s =?= %s\n", pathToFile, codebook);
+            if(strcmp(pathToFile, codebook) == 0)
+            {
+                currElement = readdir(parentDir);
+                continue;
+            }
+            //printf("%s\n", pathToFile);
+            //send the path to this file to the normal compress method, should create .hcz file on its own
+            compress(pathToFile, codebook);
+            //printf("|compressed successfully|\n");
+        }
+        //else if directory
+        else if(currElement->d_type == DT_DIR)
+        {
+            //printf("DIRECTORY!\n");
+            strcpy(pathToFile, path);
+            strcat(pathToFile, "/");
+            strcat(pathToFile, currElement->d_name);
+            DIR* subDir = opendir(pathToFile);
+            //printf("%s\n", pathToFile);
+            compressEachFile(subDir, pathToFile, codebook);
+            closedir(subDir);
+        }
+
+        currElement = readdir(parentDir);        
+    }
+}
+
+void recursiveCompress(char* path, char* codebook)
+{
+    //Determine of path is valid directory
+    DIR* dir = opendir(path);
+    if(dir) 
+    {
+
+    }
+    else if(errno == ENOENT)
+    {
+        printf("dir does not exist\n");
+        closedir(dir);
+        return;
+    }
+    else
+    {
+        printf("dir failed to open due to an unknown reason\n");
+    }
+
+    //(If we want .hcz for each file) Call recursiveCompressHelper, which will iterate through each file in this dir and all subdirs and compress them
+    compressEachFile(dir, path, codebook);
+
 }
 
 int main(int argc, char* argv[]) {
@@ -707,21 +799,29 @@ int main(int argc, char* argv[]) {
 
     else if(recursiveFlag == 1 && buildFlag == 1)
     {
+        char lastChar = argv[3][strlen(argv[3]) - 1];
+        if(lastChar == '/')
+        {
+            argv[3][strlen(argv[3]) - 1] = '\0';
+        }
+        //printf("%c\n", argv[3][strlen(argv[3]) - 1]);
         recursiveBuildCodebook(argv[3]);
     }
     
     else if(recursiveFlag == 0 && compressFlag == 1)
     {
-        //OPTION I
-        //Read through HuffmanCodebook file and populate a CodebookNode array
-
-        //OPTION II
-        //Read through HuffmanCodebook file and populate a CodebookNode BST
-
-        //After either option, read through file. For each token we see, concatenate the
-        //corresponding bit sequence to a .hcz file
-        //2 file descriptors running simultaneously?
         compress(argv[2], argv[3]);
+    }
+
+    else if(recursiveFlag == 1 && compressFlag == 1)
+    {
+        char lastChar = argv[3][strlen(argv[3]) - 1];
+        if(lastChar == '/')
+        {
+            argv[3][strlen(argv[3]) - 1] = '\0';
+        }
+        //printf("%c\n", argv[3][strlen(argv[3]) - 1]);
+        recursiveCompress(argv[3], argv[4]);
     }
 
     // Pointer for directory entry 

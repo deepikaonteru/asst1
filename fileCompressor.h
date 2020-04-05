@@ -21,6 +21,7 @@ typedef struct CodebookNode {
 
 void printAll(char*);
 void refresh(char*, int);
+void recursiveCompress(char*, char*);
 void compress(char*, char*);
 void recursiveBuildCodebook(char*);
 void buildMasterTree(DIR*, FreqTree*, char*);

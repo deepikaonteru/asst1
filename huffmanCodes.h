@@ -28,6 +28,6 @@ HuffmanCodesTNode *createHuffmanCodesTNode(char *token, char *bitSequence);
 HuffmanCodesTNode *insertHuffmanCodesTNode(HuffmanCodesTNode *root, char *token, char *bitSequence, int *treeCount) ;
 HuffmanCodesTree* insertIntoHuffmanCodesTree(HuffmanCodesTree *root, char *token, char *bitSequence);
 HuffmanCodesTree *readHuffmanCodebook(char*);
-char* findToken(HuffmanCodesTree *HuffmanCodesTree, char *token, char *bitSequence);
+char* findBitSequence(HuffmanCodesTree *HuffmanCodesTree, char *token);
 
 #endif

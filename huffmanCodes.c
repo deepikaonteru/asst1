@@ -117,7 +117,7 @@ HuffmanCodesTree *readHuffmanCodebook(char* path) {
 
 }
 
-char* findToken(HuffmanCodesTree *HuffmanCodesTree, char *token, char *bitSequence) {
+char* findBitSequence(HuffmanCodesTree *HuffmanCodesTree, char *token) {
 	HuffmanCodesTNode *start = HuffmanCodesTree->root;
 	
 	while(start != NULL) {
@@ -147,5 +147,17 @@ void printHuffmanCodesTree(HuffmanCodesTree *tree) {
 	printHuffmanCodesTNode(tree->root);
 }
 
+void freeHuffmanCodesTNode(HuffmanCodesTNode *root) {
+	if(root != NULL) {
+		freeFreqTNode(root->left);
+		free(root->token);
+		free(root->bitSequence);
+		free(root);
+		freeFreqTNode(root->right);
+	}	
+}
 
-// free shit
+void freeHuffmanCodesTree(HuffmanCodesTree *tree) {
+	freeFreqTNode(tree->root);
+	free(tree);
+}
