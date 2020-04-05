@@ -577,9 +577,10 @@ void compress(char* path, char* codebook)
     HuffmanCodesTree* huffmanCodesTree = readHuffmanCodebook(codebook);
     if(huffmanCodesTree == NULL)
     {
-        printf("There was en error in opening the codebook\n");
+        printf("There was an error in opening the codebook\n");
         return;
     }
+
 
     //printHuffmanCodesTree(huffmanCodesTree);
     //Now we have HuffmanCodesTree
@@ -753,6 +754,186 @@ void recursiveCompress(char* path, char* codebook)
 
 }
 
+void decompress(char* path, char* codebook)
+{
+    //Read the HuffmanCodebook file
+    HuffmanCodesTree* reverseHuffmanCodesTree = readHuffmanCodebook(codebook);
+
+    if(reverseHuffmanCodesTree == NULL)
+    {
+        printf("There was en error in opening the codebook\n");
+        return;
+    }
+    //printHuffmanCodesTree(reverseHuffmanCodesTree);
+
+    // get reversedHuffmanCodesTree
+    reverseHuffmanCodesTree = getReverseHuffmanCodesTree(reverseHuffmanCodesTree);
+
+    //printHuffmanCodesTree(reverseHuffmanCodesTree);
+    //Now we have a reverseHuffmanCodesTree
+
+    //open two files: path (to read from, a .hcz file), new file to write into without .hcz extension
+    int fdRead = open(path, O_RDONLY);
+    if(fdRead == -1) 
+    { //if file does not exist
+	    int errsv = errno;
+		printf("Fatal Error: file \"");
+		printf("%s\" ", path);
+		printf("does not exist\n");
+        freeHuffmanCodesTree(reverseHuffmanCodesTree);
+		close(fdRead);
+		return;
+	}
+    
+    //CHECK IF FILE IS EMPTY
+    char c;
+    int bytesRead = read(fdRead, &c, 1);
+    if(bytesRead == 0)
+    {
+        printf("Warning: File is empty!\n");
+        freeHuffmanCodesTree(reverseHuffmanCodesTree);
+        close(fdRead);
+        return;
+    }
+    close(fdRead);
+    //open file.hcz that was sent in as a path to read from
+    fdRead = open(path, O_RDONLY);
+
+    //create file without ".hcz" to prepare for writing
+    char decompressFilePath[1000];
+    memset(decompressFilePath, '\0', 1000*sizeof(char));
+    strcpy(decompressFilePath, path);
+    int i = strlen(decompressFilePath)-1;
+    for(i; i >= i-4;i--) {
+        decompressFilePath[i] = '\0';
+    }
+
+    int fdWrite = open(decompressFilePath, O_WRONLY | O_CREAT, 00600);
+
+    //start to read from file
+    char tokenRead[200];
+    memset(tokenRead, '\0', 200 * sizeof(char));
+    int tokLength = 0;
+	do {
+
+		c = 0;
+		bytesRead = read(fdRead, &c, sizeof(char));
+        //printf("%d\n", bytesRead);
+		//CHECKS
+		if(isspace(c) || bytesRead == 0)
+        {
+            //First step: write token found from reverseHuffmanCodesTree into file
+
+            if(tokenRead[0] != '\0') {
+                char* tokenToWrite = findToken(reverseHuffmanCodesTree, tokenRead);
+
+                //before we write we want to check if code read represents any space char, write actual space char into file
+                if(strcmp(tokenToWrite,"!s"))
+                {
+                    memset(tokenToWrite,'\0', strlen(tokenToWrite)*sizeof(char));
+                    tokenToWrite[0]=' ';
+                }
+                if(strcmp(tokenToWrite,"!t"))
+                {
+                    memset(tokenToWrite,'\0', strlen(tokenToWrite)*sizeof(char));
+                    tokenToWrite[0]= '\t';
+                }
+                if(strcmp(tokenToWrite,"!n"))
+                {
+                    memset(tokenToWrite,'\0', strlen(tokenToWrite)*sizeof(char));
+                    tokenToWrite[0]= '\n';
+                }
+                
+                if(tokenRead!=NULL)
+                {
+                    write(fdWrite, tokenToWrite, strlen(tokenToWrite));
+                }
+            }
+
+            //Third step: refresh tokenRead to read next token
+            memset(tokenRead, '\0', tokLength * sizeof(char));
+            tokLength = 0;
+
+        }
+		else 
+        {
+			tokenRead[tokLength] = c;
+			tokLength ++;
+		}
+
+	} while(bytesRead > 0);
+
+    freeHuffmanCodesTree(reverseHuffmanCodesTree);
+    close(fdRead);
+    close(fdWrite);
+
+}
+
+
+void decompressEachFile(DIR* parentDir, char* path, char* codebook)
+{
+    struct dirent* currElement = NULL;
+    readdir(parentDir);
+    readdir(parentDir);
+    currElement = readdir(parentDir);
+
+    while(currElement != NULL)
+    {
+        char pathToFile[1000];
+        //if file
+        if(currElement->d_type == DT_REG)
+        {
+            //do ALL THE CHECKS
+            strcpy(pathToFile, path);
+            strcat(pathToFile, "/");
+            strcat(pathToFile, currElement->d_name);
+            /*char* extensionPtr = strrchr(pathToFile, '.');
+            if(extensionPtr != NULL)
+            {
+                if(strcmp(extensionPtr, ".hcz") == 0)
+                {
+                    currElement = readdir(parentDir);
+                    continue;
+                }
+            }*/
+            //printf("%s =?= %s\n", pathToFile, codebook);
+            if(strcmp(pathToFile, codebook) == 0)
+            {
+                currElement = readdir(parentDir);
+                continue;
+            }
+            //printf("%s\n", pathToFile);
+            //send the path to this file to the normal compress method, should create .hcz file on its own
+            decompress(pathToFile, codebook);
+            //printf("|compressed successfully|\n");
+        }
+
+
+    }
+} 
+
+void recursiveDecompress(char* path, char* codebook){
+    //Determine of path is valid directory
+    DIR* dir = opendir(path);
+    if(dir) 
+    {
+
+    }
+    else if(errno == ENOENT)
+    {
+        printf("dir does not exist\n");
+        closedir(dir);
+        return;
+    }
+    else
+    {
+        printf("dir failed to open due to an unknown reason\n");
+    }
+
+    decompressEachFile(dir, path, codebook);
+
+}
+
 int main(int argc, char* argv[]) {
 
     if (argc < 3)
@@ -824,6 +1005,16 @@ int main(int argc, char* argv[]) {
         recursiveCompress(argv[3], argv[4]);
     }
 
+    else if(recursiveFlag == 0 && decompressFlag == 1)
+    {
+        decompress(argv[2], argv[3]);
+    }
+
+    else if(recursiveFlag == 1 && decompressFlag == 1)
+    {
+        recursiveDecompress(argv[3], argv[4]);
+    }
+
     // Pointer for directory entry 
     /*
     DIR *pDir;
@@ -852,6 +1043,6 @@ COMMAND LINE INTERFACE
 
  ./fileCompressor -d ./dir/test/file.txt.hcz ./HuffmanCodebook
 decompress ./dir/test/file.txt.hcz in to ./dir/test/file.txt using the codebook ./HuffmanCodebook
-
 */
+
 }

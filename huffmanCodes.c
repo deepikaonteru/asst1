@@ -117,6 +117,26 @@ HuffmanCodesTree *readHuffmanCodebook(char* path) {
 
 }
 
+void inverseKeyAndValue(HuffmanCodesTree *result, HuffmanCodesTNode *treeToReverse) {
+	
+	if(treeToReverse != NULL) {
+		inverseKeyAndValue(result, treeToReverse->left);
+		
+		// insertIntoHuffmanCodesTree,
+		// interchange key and value
+		insertIntoHuffmanCodesTree(result, treeToReverse->bitSequence, treeToReverse->token);
+		
+		inverseKeyAndValue(result, treeToReverse->right);		
+	}
+}
+
+HuffmanCodesTree *getReverseHuffmanCodesTree(HuffmanCodesTree *treeToReverse) {
+	HuffmanCodesTree *result = createHuffmanCodesTree();	
+	inverseKeyAndValue(result, treeToReverse->root);
+	return result;
+}
+
+
 char* findBitSequence(HuffmanCodesTree *HuffmanCodesTree, char *token) {
 	HuffmanCodesTNode *start = HuffmanCodesTree->root;
 	
@@ -126,6 +146,23 @@ char* findBitSequence(HuffmanCodesTree *HuffmanCodesTree, char *token) {
 			return start->bitSequence;
 			
 		} else if(strcmp(start->token, token) < 0) {
+			start = start->right;
+		} else {
+			start = start->left;
+		}
+	}
+	return NULL;
+}
+
+char* findToken(HuffmanCodesTree *reverseHuffmanCodesTree, char *bitSequence) {
+	HuffmanCodesTNode *start = reverseHuffmanCodesTree->root;
+	
+	while(start != NULL) {
+		// if current node has same key
+		if(strcmp(start->bitSequence, bitSequence) == 0) {
+			return start->token;
+			
+		} else if(strcmp(start->bitSequence, bitSequence) < 0) {
 			start = start->right;
 		} else {
 			start = start->left;
