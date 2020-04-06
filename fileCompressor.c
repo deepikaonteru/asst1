@@ -307,6 +307,7 @@ void buildCodebook(char* path)
     //if 1, exists and needs to be overwritten
     //if 0, does not exist and needs to be created
     
+    /*
     char huffmanCodebookPath[1000];
     memset(huffmanCodebookPath, '\0', 1000 * sizeof(char));
     strcpy(huffmanCodebookPath, path);
@@ -319,7 +320,9 @@ void buildCodebook(char* path)
     //printf("%s\n", huffmanCodebookPath);
     strcat(huffmanCodebookPath + sizeOfPath, "/HuffmanCodebook");
     remove(huffmanCodebookPath);
-    fd = open(huffmanCodebookPath, O_WRONLY | O_CREAT, 00600);
+    */
+    remove("./HuffmanCodebook");
+    fd = open("./HuffmanCodebook", O_WRONLY | O_CREAT, 00600);
     //printf("%d\n", fd);
     write(fd, "!\n", 2);
     for(i = 0; i<numLeafNodes; i ++)
@@ -484,92 +487,94 @@ void recursiveBuildCodebook(char* path)
     DIR* dir = opendir(path);
     if(dir) 
     {
+        //Remove currently existing HuffmanCodebook file
+        /*
+        char huffmanCodebookPath[1000];
+        strcpy(huffmanCodebookPath, path);
+        strcat(huffmanCodebookPath, "/HuffmanCodebook");
+        */
+        remove("./HuffmanCodebook");
 
+        //Using parent directory, iterate through all files, create masterTree
+        FreqTree* masterTree = createFreqTree();
+        buildMasterTree(dir, masterTree, path);
+        closedir(dir);
+        //printFreqTree(masterTree);
+
+        MinHeap* tokenMinHeap = convertFreqTreeToMinHeap(masterTree);
+        freeFreqTree(masterTree);
+
+        /*
+        int i;
+        for(i=0; i<(tokenMinHeap->heapSize); i ++) {
+            HeapNode* tmp = tokenMinHeap->nodes[i];
+            char* token = tmp->data->token;
+            int count = tmp->count;
+            printf("%s\t%d\n", token, count);
+        }
+        */
+        
+        TreeNode* masterHuffmanTree = buildHuffmanTree(tokenMinHeap);
+        //printTree(huffmanTree);
+        //printf("\n");
+
+        //find number of leaf nodes
+        int numLeafNodes = findNumLeafNodes(masterHuffmanTree);
+        //printf("%d\n", numLeafNodes);
+
+        //Use number of leaf nodes to create an array of size numLeafNodes, this is an array of CodebookNodes
+        CodebookNode* leafNodes = (CodebookNode*)(malloc(numLeafNodes * sizeof(CodebookNode)));
+
+        //find height of huffmanTree
+        int h = findHeight(masterHuffmanTree) - 1;
+
+        int i;
+        for(i = 0; i<numLeafNodes; i ++) 
+        {
+            leafNodes[i].bitSequence = (char*)(malloc(h * sizeof(char)));
+            memset(leafNodes[i].bitSequence, '\0', h * sizeof(char));
+        }
+
+        //fill in token and bitSequence information in CodebookNodes array
+        getTokens(masterHuffmanTree, leafNodes);
+
+        char* bitSequence = (char*)(malloc(h * sizeof(char)));
+        memset(bitSequence, '\0', h * sizeof(char));
+        getBitSequences(masterHuffmanTree, leafNodes, bitSequence, 0);
+
+        //Now that we have CodebookNode array complete, loop through each, write to HuffmanCodebook file
+        //int exist = fileExists("HuffmanCodebook"); 
+        //if 1, exists and needs to be overwritten
+        //if 0, does not exist and needs to be created
+        int fd = open("./HuffmanCodebook", O_WRONLY | O_CREAT, 00600);
+        //printf("%d\n", fd);
+        write(fd, "!\n", 2);
+        for(i = 0; i<numLeafNodes; i ++)
+        {
+            char* bitSequenceBuf = leafNodes[i].bitSequence;
+            char* tokenBuf = leafNodes[i].token;
+
+            write(fd, bitSequenceBuf, strlen(bitSequenceBuf));
+            write(fd, "\t", 1);
+            write(fd, tokenBuf, strlen(tokenBuf));
+            write(fd, "\n", 1);
+        }
+        write(fd, "\n", 1);
+        close(fd);
     }
     else if(errno == ENOENT)
     {
-        printf("dir does not exist\n");
+        printf("Error: Directory \"%s\" does not exist.\n", path);
         closedir(dir);
         return;
     }
     else
     {
-        printf("dir failed to open due to an unknown reason\n");
+        printf("Error: Invalid directory.\n");
+        return;
     }
     //printAll(path);
 
-    //Remove currently existing HuffmanCodebook file
-    char huffmanCodebookPath[1000];
-    strcpy(huffmanCodebookPath, path);
-    strcat(huffmanCodebookPath, "/HuffmanCodebook");
-    remove(huffmanCodebookPath);
-
-    //Using parent directory, iterate through all files, create masterTree
-    FreqTree* masterTree = createFreqTree();
-    buildMasterTree(dir, masterTree, path);
-    closedir(dir);
-    //printFreqTree(masterTree);
-
-    MinHeap* tokenMinHeap = convertFreqTreeToMinHeap(masterTree);
-    freeFreqTree(masterTree);
-
-    /*
-    int i;
-    for(i=0; i<(tokenMinHeap->heapSize); i ++) {
-        HeapNode* tmp = tokenMinHeap->nodes[i];
-        char* token = tmp->data->token;
-        int count = tmp->count;
-        printf("%s\t%d\n", token, count);
-    }
-    */
-    
-    TreeNode* masterHuffmanTree = buildHuffmanTree(tokenMinHeap);
-    //printTree(huffmanTree);
-    //printf("\n");
-
-    //find number of leaf nodes
-    int numLeafNodes = findNumLeafNodes(masterHuffmanTree);
-    //printf("%d\n", numLeafNodes);
-
-    //Use number of leaf nodes to create an array of size numLeafNodes, this is an array of CodebookNodes
-    CodebookNode* leafNodes = (CodebookNode*)(malloc(numLeafNodes * sizeof(CodebookNode)));
-
-    //find height of huffmanTree
-    int h = findHeight(masterHuffmanTree) - 1;
-
-    int i;
-    for(i = 0; i<numLeafNodes; i ++) 
-    {
-        leafNodes[i].bitSequence = (char*)(malloc(h * sizeof(char)));
-        memset(leafNodes[i].bitSequence, '\0', h * sizeof(char));
-    }
-
-    //fill in token and bitSequence information in CodebookNodes array
-    getTokens(masterHuffmanTree, leafNodes);
-
-    char* bitSequence = (char*)(malloc(h * sizeof(char)));
-    memset(bitSequence, '\0', h * sizeof(char));
-    getBitSequences(masterHuffmanTree, leafNodes, bitSequence, 0);
-
-    //Now that we have CodebookNode array complete, loop through each, write to HuffmanCodebook file
-    //int exist = fileExists("HuffmanCodebook"); 
-    //if 1, exists and needs to be overwritten
-    //if 0, does not exist and needs to be created
-    int fd = open(huffmanCodebookPath, O_WRONLY | O_CREAT, 00600);
-    //printf("%d\n", fd);
-    write(fd, "!\n", 2);
-    for(i = 0; i<numLeafNodes; i ++)
-    {
-        char* bitSequenceBuf = leafNodes[i].bitSequence;
-        char* tokenBuf = leafNodes[i].token;
-
-        write(fd, bitSequenceBuf, strlen(bitSequenceBuf));
-        write(fd, "\t", 1);
-        write(fd, tokenBuf, strlen(tokenBuf));
-        write(fd, "\n", 1);
-    }
-    write(fd, "\n", 1);
-    close(fd);
 }
 
 void compress(char* path, char* codebook)
@@ -737,7 +742,27 @@ void recursiveCompress(char* path, char* codebook)
     DIR* dir = opendir(path);
     if(dir) 
     {
+        int huffmanFD = open(codebook, O_RDONLY);
+        if(huffmanFD == -1) { //if file does not exist
+            int errsv = errno;
+            printf("Error: HuffmanCodebook file does not exist\n");
+            close(huffmanFD);
+            return;
+        }
+        
+        //CHECK IF FILE IS EMPTY
+        char c;
+        int bytesRead = read(huffmanFD, &c, 1);
+        if(bytesRead == 0)
+        {
+            printf("Warning: HuffmanCodebook file is empty\n");
+            close(huffmanFD);
+            return;
+        }
+        close(huffmanFD);
 
+        //(If we want .hcz for each file) Call recursiveCompressHelper, which will iterate through each file in this dir and all subdirs and compress them
+        compressEachFile(dir, path, codebook);
     }
     else if(errno == ENOENT)
     {
@@ -747,30 +772,9 @@ void recursiveCompress(char* path, char* codebook)
     }
     else
     {
-        printf("Error: Directory \"%s\" failed to open.\n", path);
-    }
-
-	int huffmanFD = open(codebook, O_RDONLY);
-    if(huffmanFD == -1) { //if file does not exist
-	    int errsv = errno;
-		printf("Error: HuffmanCodebook file does not exist\n");
-		close(huffmanFD);
-		return;
-	}
-    
-    //CHECK IF FILE IS EMPTY
-    char c;
-    int bytesRead = read(huffmanFD, &c, 1);
-    if(bytesRead == 0)
-    {
-        printf("Warning: HuffmanCodebook file is empty\n");
-        close(huffmanFD);
+        printf("Error: Invalid directory.\n", path);
         return;
     }
-    close(huffmanFD);
-
-    //(If we want .hcz for each file) Call recursiveCompressHelper, which will iterate through each file in this dir and all subdirs and compress them
-    compressEachFile(dir, path, codebook);
 
 }
 
@@ -945,39 +949,38 @@ void recursiveDecompress(char* path, char* codebook){
     DIR* dir = opendir(path);
     if(dir) 
     {
+        int huffmanFD = open(codebook, O_RDONLY);
+        if(huffmanFD == -1) { //if file does not exist
+            int errsv = errno;
+            printf("Error: HuffmanCodebook file does not exist\n");
+            close(huffmanFD);
+            return;
+        }
+        
+        //CHECK IF FILE IS EMPTY
+        char c;
+        int bytesRead = read(huffmanFD, &c, 1);
+        if(bytesRead == 0)
+        {
+            printf("Warning: HuffmanCodebook file is empty\n");
+            close(huffmanFD);
+            return;
+        }
+        close(huffmanFD);
 
+        decompressEachFile(dir, path, codebook);
     }
     else if(errno == ENOENT)
     {
-        printf("dir does not exist\n");
+        printf("Error: Directory \"%s\" does not exist.\n", path);
         closedir(dir);
         return;
     }
     else
     {
-        printf("dir failed to open due to an unknown reason\n");
-    }
-
-	int huffmanFD = open(codebook, O_RDONLY);
-    if(huffmanFD == -1) { //if file does not exist
-	    int errsv = errno;
-		printf("Error: HuffmanCodebook file does not exist\n");
-		close(huffmanFD);
-		return;
-	}
-    
-    //CHECK IF FILE IS EMPTY
-    char c;
-    int bytesRead = read(huffmanFD, &c, 1);
-    if(bytesRead == 0)
-    {
-        printf("Warning: HuffmanCodebook file is empty\n");
-        close(huffmanFD);
+        printf("Error: Invalid directory.\n");
         return;
     }
-    close(huffmanFD);
-
-    decompressEachFile(dir, path, codebook);
 
 }
 
@@ -1122,7 +1125,17 @@ int main(int argc, char* argv[]) {
     {
         if(argv[2][0] == '.' && argv[2][1] == '/')
         {
-            buildCodebook(argv[2]);
+            DIR* dirTest = opendir(argv[2]);
+            if(dirTest)
+            {
+                //this means that it IS a directory. that's bad.
+                printf("Error: Expected file, was directory.\n");
+                return 0;
+            }
+            else
+            {
+                buildCodebook(argv[2]);
+            }
         }
         else {
             char pathToFile[1000];
@@ -1158,6 +1171,12 @@ int main(int argc, char* argv[]) {
     
     else if(recursiveFlag == 0 && compressFlag == 1)
     {
+        DIR* dirTest = opendir(argv[2]);
+        if(dirTest)
+        {
+            printf("Error: Expected file, was directory.\n");
+            return 0;
+        }
         char pathToFile[1000];
         char pathToCodebook[1000];
         memset(pathToFile, '\0', 1000);
@@ -1219,6 +1238,12 @@ int main(int argc, char* argv[]) {
 
     else if(recursiveFlag == 0 && decompressFlag == 1)
     {
+        DIR* dirTest = opendir(argv[2]);
+        if(dirTest)
+        {
+            printf("Error: Expected file, was directory.\n");
+            return 0;
+        }
         char pathToFile[1000];
         char pathToCodebook[1000];
         memset(pathToFile, '\0', 1000);
