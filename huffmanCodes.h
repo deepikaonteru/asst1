@@ -31,7 +31,6 @@ HuffmanCodesTree *readHuffmanCodebook(char*);
 void inverseKeyAndValue(HuffmanCodesTree *result, HuffmanCodesTNode *treeToReverse);
 HuffmanCodesTree *getReverseHuffmanCodesTree(HuffmanCodesTree *treeToReverse);
 char* findBitSequence(HuffmanCodesTree *HuffmanCodesTree, char *token);
-char* findToken(HuffmanCodesTree *reverseHuffmanCodesTree, char *bitSequence);
 void printHuffmanCodesTNode(HuffmanCodesTNode *root);
 void printHuffmanCodesTree(HuffmanCodesTree *tree);
 void freeHuffmanCodesTNode(HuffmanCodesTNode *root);

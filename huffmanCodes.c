@@ -44,9 +44,7 @@ HuffmanCodesTree *readHuffmanCodebook(char* path) {
 	int rd = open(path, O_RDONLY);
     if(rd == -1) { //if file does not exist
 	    int errsv = errno;
-		printf("Fatal Error: file \"");
-		printf("%s\" ", path);
-		printf("does not exist\n");
+		printf("Error: HuffmanCodebook file does not exist.\n");
 		close(rd);
 		return NULL;
 	}
@@ -56,7 +54,7 @@ HuffmanCodesTree *readHuffmanCodebook(char* path) {
     int bytesRead = read(rd, &c, 1);
     if(bytesRead == 0)
     {
-        printf("Warning: File is empty!\n");
+        printf("Error: HuffmanCodebook file is empty.\n");
         close(rd);
         return NULL;
     }
@@ -136,33 +134,16 @@ HuffmanCodesTree *getReverseHuffmanCodesTree(HuffmanCodesTree *treeToReverse) {
 	return result;
 }
 
-
+//if compress, so return start->bitSequence
+//if decompress, so return start->bitSequence (which is token)
 char* findBitSequence(HuffmanCodesTree *HuffmanCodesTree, char *token) {
 	HuffmanCodesTNode *start = HuffmanCodesTree->root;
 	
 	while(start != NULL) {
 		// if current node has same key
 		if(strcmp(start->token, token) == 0) {
-			return start->bitSequence;
-			
+			return start->bitSequence;	
 		} else if(strcmp(start->token, token) < 0) {
-			start = start->right;
-		} else {
-			start = start->left;
-		}
-	}
-	return NULL;
-}
-
-char* findToken(HuffmanCodesTree *reverseHuffmanCodesTree, char *bitSequence) {
-	HuffmanCodesTNode *start = reverseHuffmanCodesTree->root;
-	
-	while(start != NULL) {
-		// if current node has same key
-		if(strcmp(start->bitSequence, bitSequence) == 0) {
-			return start->token;
-			
-		} else if(strcmp(start->bitSequence, bitSequence) < 0) {
 			start = start->right;
 		} else {
 			start = start->left;
