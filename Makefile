@@ -11,4 +11,4 @@ huffmanCodes.o: huffmanCodes.c
 	gcc -c huffmanCodes.c
 
 clean:
-	rm fileCompressor minHeap.o freqDict.o
+	rm fileCompressor minHeap.o freqDict.o huffmanCodes.o
