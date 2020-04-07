@@ -1,0 +1,138 @@
+In practice, "fileCompressor.c' is designed to handle a number of different errors that could arise from different combinations of command line inputs.
+
+1.) Inputting fewer than 3 arguments.
+- The command that requires the least number of inputs is the command for normal build
+    ./fileCompressor -b <pathToFileToBuildCodebookFrom>
+- So it is logical to assume that a command invoking fileCompressor with fewer than 3 arguments is automatically wrong.
+
+Example:
+$ ./fileCompressor -b
+Error: Too few arguments.
+
+2.) Inputting more than 5 arguments.
+- The commands that requires the max number of inputs are the commands for recursive compress/recursive decompress
+    ./fileCompressor -R -c <pathToFileToRead> <pathToCodebook>
+    ./fileCompressor -R -d <pathToCompressedFileToRead> <pathToCodebook>
+- So it is logical to assume that a command with more than 5 arguments is automatically wrong
+
+Example:
+$ ./fileCompressor -R -R -c ./testDirectory ./HuffmanCodebook 
+Error: Too many arguments.
+
+3.) Inputting 3 arguments only, but for compress/decompress functionality.
+- If the user enters 3 arguments only, then it must be build to use the build functionality.
+- If the user wants to use the compress or decompress functionality, then they must enter four arguments,
+  but the program detected only 3 inputs, so there is an error for not having the correct number of arguments.
+- It is logical to assume that if there are only 3 arguments, then the second argument HAS to be -b, otherwise display an error.
+
+Example:
+$ ./fileCompressor -c ./file.txt
+Error: Expected more arguments.
+
+4.) Inputting 4 arguments only, but for recursive compress/recursive decompress functionality.
+- If the user enters only 4 arguments, then it must be the case that the user wants to use the compress, decompress, or recursive
+  build functionality. If the user is looking to use the recursive compress or recursive decompress functionality, then
+  there needs to be 5 arguments. Since there are 4, the program will expect more.
+
+Example:
+$ ./fileCompressor -R -c ./file.txt
+Error: Expected more arguments.
+
+5.) Inputting -b followed by -R and path to directory
+- If the input appears in this form:
+    ./fileCompressor -b -R ./testDirectory
+- this will result in an error, because the program assumes that since there are 4 arguments, the first flag must be either -R, -c, or -d.
+
+Example:
+$ ./fileCompressor -b -R ./testDirectory
+Error: Too many arguments for build.
+
+6.) Incorrect flag in second argument when there are 5 arguments
+- If there are a total of 5 arguments, and the second argument is not -R, then it is automatically incorrect
+
+Example:
+$ ./fileCompressor -c -R ./testDirectory ./HuffmanCodebook
+Error: Incorrect flag (second arg should be -R)
+
+7.) When wanting to use build, compress, or decompress functionality, the path sent in is a path to a directory.
+- If the user inputs a directory for argv[2], then the program must display an error,
+  since the normal build/compress/decompress functionality does not apply to directories,
+  only files.
+
+Example:
+$ ./fileCompressor -b ./testDirectory
+Error: Expected file, was directory.
+
+8.) When running any build, compress, or decompress function, the given file path does not exist
+- If the file path specified does not exist, the program displays an error saying the file does not exist.
+
+Example:
+$ ./fileCompressor -b <file that does not exist>
+Error: File <file that does not exist> does not exist.
+
+9.) When running any build, compress, or decompress function, the given file is empty.
+- If the file specified is empty, the program displays a warning saying that the file is empty, and skips over this file.
+
+Example:
+$ ./fileCompressor -b <file that is empty>
+Warning: File <file that is empty> is empty, skipping file.
+
+10.) HuffmanCodebook file does not exist or missing.
+- If the HuffmanCodebook file path does not exist, then displays
+
+Error: HuffmanCodebook file does not exist
+
+- If the HuffmanCodebook file is empty for whatever reason:
+
+Warning: HuffmanCodebook file is empty
+
+11.) Specified directory does not exist
+- If the specified directory for the recursive functions does not exist, displays:
+
+Error: Directory <directory name> does not exist.
+
+12.) Specified directory path actually is a file
+- If the specified directory path is actually a file path, displays:
+
+Error: Invalid directory.
+
+---------------------------------------------------------------------------------
+Test For Non-Recursive File Compression/Decompression
+
+testFile.txt: contains text with spaces, newlines, tabs, etc.
+*exists in the same directory as fileCompressor
+
+To properly build a HuffmanCodebook file based on the testFile.txt:
+./fileCompressor -b ./testFile.txt
+
+This results in a HuffmanCodebook being created, written to, and saved in the same directory as fileCompressor
+
+To properly compress testFile.txt given the HuffmanCodebook:
+./fileCompressor -c ./testFile.txt ./HuffmanCodebook
+
+This results in a testFile.txt.hcz file being created, written to, and saved in the same directory as testFile.txt.
+
+To properly decompress testFile.txt.hcz given the HuffmanCodebook:
+./fileCompressor -d ./testFile.txt ./HuffmanCodebook
+
+This results in a testFile.txt file being created, written to, and saved in the same directory as testFile.txt.hcz.
+
+---------------------------------------------------------------------------------
+Test for Recursive File Compression/Decompression
+
+testDirectory: contains three files.
+
+To properly build a HuffmanCodebook file based on the testDirectory:
+./fileCompressor -R -b ./testDirectory
+
+This results in a HuffmanCodebook file being created, written to, and saved to the same directory as fileCompressor.
+
+To properly compress all the files within testDirectory given the HuffmanCodebook:
+./fileCompressor -R -c ./testDirectory ./HuffmanCodebook
+
+This results in three .hcz files being created, written to, and saved in the same directory or subdirectories as the the original files, each corresponding to an uncompressed file.
+
+To properly decompress all the files within testDirectory given the HuffmanCodebook:
+./fileCompressor -R -d ./testDirectory ./HuffmanCodebook
+
+This results in three files being created, written to, and saved in the same directory or subdirectories as the original files, each corresponding to a compressed file.

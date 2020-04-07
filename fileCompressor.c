@@ -986,13 +986,6 @@ void recursiveDecompress(char* path, char* codebook){
 
 int main(int argc, char* argv[]) {
 
-    if (argc < 3)
-	{
-		printf("Need more/ less  of arguments.\n Here is what the input should be formatted as: ./fileCompressor <flag> <path or file> |codebook|\n");
-		
-		EXIT_FAILURE;
-	}
-
     char recursiveFlag = 0;
 	char compressFlag = 0;
 	char decompressFlag = 0;	
@@ -1036,10 +1029,20 @@ int main(int argc, char* argv[]) {
         if(strcmp(argv[1], "-c") == 0)
         {
             compressFlag = 1;
+            if(strcmp(argv[2], "-R") == 0)
+            {
+                printf("Error: Incorrect placement of flags (-R should appear before -c).\n");
+                return 0;
+            }
         }
         else if(strcmp(argv[1], "-d") == 0)
         {
             decompressFlag = 1;
+            if(strcmp(argv[2], "-R") == 0)
+            {
+                printf("Error: Incorrect placement of flags (-R should appear before -d).\n");
+                return 0;
+            }
         }
         else if(strcmp(argv[1], "-R") == 0)
         {
@@ -1058,6 +1061,10 @@ int main(int argc, char* argv[]) {
                 printf("Error: Incorrect flag (third arg can only be -b if only four arguments).\n");
                 return 0;
             }
+        }
+        else if(strcmp(argv[1], "-b") == 0)
+        {
+            printf("Error: Too many arguments for build.\n");
         }
         else
         {
@@ -1083,13 +1090,13 @@ int main(int argc, char* argv[]) {
             }
             else
             {
-                printf("Error: Incorrect flag (third arg should be -b, -c, or -d).\n");
+                printf("Error: Incorrect flag (third arg should be -c, or -d).\n");
                 return 0;
             }
         }
         else
         {
-            printf("Error: Incorrect flag (second arg should be -R, -b, -c, or -d).\n");
+            printf("Error: Incorrect flag (second arg should be -R).\n");
             return 0;
         }
     }
